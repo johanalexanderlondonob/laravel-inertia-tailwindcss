@@ -1,20 +1,15 @@
 <template>
     <worksheet-layout>
-        <template #toolbarTitle> Worksheet </template>
+        <template #toolbarTitle> Hoja de trabajo </template>
         <template #main>
-            <v-container>
-                <!-- Title &ndash;&gt;-->
-                <v-row>
-                    <v-col cols="12">
-                        <h2> Crear nueva Hoja de trabajo </h2>
-                        <p> Crea una nueva Hoja de trabajo para configurar los procesos que se aplicarán en el período que elija. </p>
-                    </v-col>
-                </v-row>
-                <v-spacer></v-spacer>
-                <v-row><v-col cols="12" sm="5">
+            <div class="bg-white shadow rounded-lg p-6 max-w-lg">
+                <h2 class="text-xl font-semibold text-gray-800"> Crear nueva Hoja de trabajo </h2>
+                <p class="mt-1 text-sm text-gray-500"> Crea una nueva Hoja de trabajo para configurar los procesos que se aplicarán en el período que elija. </p>
+
+                <div class="mt-6">
                     <create-worksheet-form :customers="listCustomers"></create-worksheet-form>
-                </v-col></v-row>
-            </v-container>
+                </div>
+            </div>
         </template>
     </worksheet-layout>
 </template>
@@ -34,11 +29,6 @@ export default {
             default: null,
             required: true
         },
-    },
-
-    mounted() {
-        // console.log(this.customers)
-        // this.listProcesses;
     },
 
     computed: {

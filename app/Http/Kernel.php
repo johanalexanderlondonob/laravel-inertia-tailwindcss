@@ -41,6 +41,11 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
+            // Required for `auth:sanctum` on routes/api.php to recognize the browser's
+            // session cookie (this app calls those endpoints from axios in the same
+            // session, not with a bearer token). Without this, auth:sanctum always sees
+            // a guest and every request gets redirected to /login, even when logged in.
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

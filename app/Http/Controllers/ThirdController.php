@@ -4,16 +4,14 @@
 namespace App\Http\Controllers;
 
 use App\Arketops\City\CityRepository;
+use App\Arketops\Customer\CustomerRepository;
 use App\Arketops\IdentificationType\IdentificationTypeRepository;
 use App\Arketops\NatureType\NatureTypeRepository;
 use App\Arketops\Third\ThirdRepository;
 use App\Arketops\ThirdRegimeType\ThirdRegimeTypeRepository;
-use http\Env\Response;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 
 class ThirdController extends Controller
 {
@@ -22,19 +20,22 @@ class ThirdController extends Controller
     protected IdentificationTypeRepository $identificationTypeRepo;
     protected ThirdRegimeTypeRepository $thirdRegimeTypeRepo;
     protected ThirdRepository $thirdRepo;
+    protected CustomerRepository $customerRepo;
 
     public function __construct(
         CityRepository $cityRepository,
         NatureTypeRepository $natureTypeRepository,
         IdentificationTypeRepository $identificationTypeRepository,
         ThirdRegimeTypeRepository $thirdRegimeTypeRepository,
-        ThirdRepository $thirdRepository)
+        ThirdRepository $thirdRepository,
+        CustomerRepository $customerRepository)
     {
         $this->cityRepo = $cityRepository;
         $this->natureTypeRepo = $natureTypeRepository;
         $this->identificationTypeRepo = $identificationTypeRepository;
         $this->thirdRegimeTypeRepo = $thirdRegimeTypeRepository;
         $this->thirdRepo = $thirdRepository;
+        $this->customerRepo = $customerRepository;
     }
 
     public function create(Request $request)
@@ -43,7 +44,6 @@ class ThirdController extends Controller
 
 //            $request->session()->flash('flash.banner', 'Yay it works!');
 //            $request->session()->flash('flash.bannerStyle', 'danger');
-            Inertia::setRootView('worksheet.app');
             return inertia('Third/CreateThirdForm', [
                 'cities' => $this->cityRepo->getAll(),
                 'natureTypes' => $this->natureTypeRepo->getAll(),
@@ -108,21 +108,42 @@ class ThirdController extends Controller
                 'thirdAs.in' => 'You must specify how you want to create the third: as "user" or as "customer"',
             ])->validateWithBag('createThird');
 
-            $third = $this->thirdRepo->create($request->all());
+            $validated = $request->only([
+                'id_city', 'id_nature_type', 'id_identification_type', 'id_regime_type',
+                'nit', 'third_name', 'name1', 'name2', 'lastname1', 'lastname2',
+                'address', 'phone1', 'phone2', 'email',
+            ]);
 
-            if ($third) {
-                return redirect()->action(
-                    [UserController::class, 'create'],
-                    [
-                        'id' => $third->id_third,
-                        'nit' => $third->nit,
-                        'name' => $third->third_name,
-                        'email' => $third->email
-                    ]
-                );
+            // Only the validated fields are persisted, never the raw request body, so an
+            // extra/unexpected field in the payload can't be mass-assigned onto the model.
+            $third = $this->thirdRepo->create($validated);
+
+            if (! $third) {
+                return redirect()->route('register');
             }
 
-            return redirect()->route('register');
+            // `thirdAs` was previously validated but never actually used: every third was
+            // sent to the "create user" screen regardless of which option was picked, and
+            // choosing "customer" never created the matching customers row, so a third
+            // created that way could never appear in the Worksheet module's customer list.
+            if ($createAs === 'customer') {
+                $this->customerRepo->create([
+                    'id_third' => $third->id_third,
+                    'active' => 'S',
+                ]);
+
+                return redirect()->route('worksheet.index');
+            }
+
+            return redirect()->action(
+                [UserController::class, 'create'],
+                [
+                    'id' => $third->id_third,
+                    'nit' => $third->nit,
+                    'name' => $third->third_name,
+                    'email' => $third->email
+                ]
+            );
         }
     }
 

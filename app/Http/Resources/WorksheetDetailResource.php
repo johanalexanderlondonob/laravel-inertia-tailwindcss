@@ -17,7 +17,7 @@ class WorksheetDetailResource extends JsonResource
     {
         return [
             'id' => $this->id_worksheet_detail,
-            'worksheetProcess' => $this->id_worksheet_process,
+            'worksheet' => $this->id_worksheet,
             'subprocess' => SubprocessResource::make($this->subprocess),
             'user' => UserResource::make($this->user),
             'status' => StatusResource::make($this->status),

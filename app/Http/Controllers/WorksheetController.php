@@ -34,7 +34,6 @@ class WorksheetController extends Controller
 
     public function index(): Response
     {
-        Inertia::setRootView('worksheet.app');
         return Inertia::render('Worksheet/Index', [
             'customers' => CustomerResource::collection($this->customerRepo->getWorksheets())
         ]);
@@ -42,7 +41,6 @@ class WorksheetController extends Controller
 
     public function show(int $idWorksheet, Request $request): Response
     {
-        Inertia::setRootView('worksheet.app');
         return Inertia::render('Worksheet/Show', ['worksheet' => $this->worksheetRepo->find($idWorksheet)]);
     }
 
@@ -50,7 +48,6 @@ class WorksheetController extends Controller
     {
         // For fill the form
         if ($request->isMethod('get')) {
-            Inertia::setRootView('worksheet.app');
             // To create a new worksheet, a customer must be selected. Therefore, a form will be rendered with the list of available clients
             return Inertia::render('Worksheet/Create', [
                 'customers' => CustomerResource::collection($this->customerRepo->getAll()),
@@ -61,8 +58,10 @@ class WorksheetController extends Controller
                 'period' => ['required', 'string', Rule::unique('worksheets', 'period')->where('id_customer', $request->get('id_customer'))],
             ])->validateWithBag('createWorksheet');
 
-            // Collecting the info of worksheet just created
-            $worksheet = $this->worksheetRepo->create($request->all());
+            // Collecting the info of worksheet just created. Only the whitelisted fields are
+            // sent to the repository (not the raw request body) to avoid mass-assigning
+            // anything beyond what was validated above.
+            $worksheet = $this->worksheetRepo->create($request->only(['id_customer', 'period']));
 
             if ($worksheet) {
                 // Getting info of the customer of the worksheet just created

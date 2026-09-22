@@ -7,7 +7,6 @@ use App\Arketops\WorksheetProcess\WorksheetProcessRepository;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Inertia\Inertia;
 
 class WorksheetProcessController extends Controller
 {
@@ -35,7 +34,6 @@ class WorksheetProcessController extends Controller
                     'period' => $request->get('pd'),
                 ];
             }
-            Inertia::setRootView('worksheet.app');
             // Finally, show the form with needed information
             return inertia('WorksheetProcess/Create', ['worksheet' => $worksheet]);
         } elseif ($request->isMethod('post')) {

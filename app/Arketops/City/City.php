@@ -12,6 +12,8 @@ class City extends BaseModel
 
     protected $table = 'cities';
     protected $primaryKey = 'id_city';
+    // The `cities` table has no created_at/updated_at columns.
+    public $timestamps = false;
 
     public function thirds()
     {

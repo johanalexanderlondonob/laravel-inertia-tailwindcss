@@ -11,6 +11,8 @@ class IdentificationType extends BaseModel
     use HasFactory;
 
     protected $primaryKey = 'id_identification_type';
+    // The `identification_types` table has no created_at/updated_at columns.
+    public $timestamps = false;
 
     public function thirds()
     {

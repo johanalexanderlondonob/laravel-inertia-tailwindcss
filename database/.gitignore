@@ -1,2 +1,8 @@
 *.sqlite
 *.sqlite-journal
+
+# Raw DB dumps (00-general.sql, 01-customers.sql) used to carry real customer/third PII
+# and were committed to this repo. Schema now lives in versioned migrations
+# (database/migrations) and non-PII reference data in database/seeders/ReferenceDataSeeder.php.
+# Never commit a raw dump again — if you need one locally, keep it out of git.
+*.sql

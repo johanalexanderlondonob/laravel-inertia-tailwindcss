@@ -17,7 +17,11 @@ class WorksheetRepository extends \App\Arketops\Base\BaseRepository
 
     public function find($id)
     {
-        return $this->model()::where('id_worksheet', '=', $id)->with('worksheetProcesses')->get();
+        // `find` must return a single model, not a collection: callers (e.g.
+        // WorksheetController::show) pass the result straight to the view as one record.
+        return $this->model()::where('id_worksheet', '=', $id)
+            ->with(['customer.third', 'worksheetProcesses.process'])
+            ->firstOrFail();
     }
 
     public function findByCustomerPeriod(int $customer, string $period)
@@ -28,7 +32,9 @@ class WorksheetRepository extends \App\Arketops\Base\BaseRepository
 
     public function getOpenedWorksheets()
     {
-        return $this->model()->all()->where('opened', '=', 'S');
+        // Filter at the database level instead of loading every worksheet into memory
+        // and filtering in PHP.
+        return $this->model()::where('opened', '=', 'S')->get();
     }
 
     public function getWithWorksheetProcesses()

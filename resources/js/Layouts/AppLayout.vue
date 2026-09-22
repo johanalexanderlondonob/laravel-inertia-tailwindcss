@@ -44,7 +44,7 @@
                     
                     <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
                         <!-- Guest Dropdown -->
-                        <div class="ml-3 relative focus:outline-black">
+                        <div class="ml-3 relative focus:outline-black" v-click-outside="closeDropdown">
                             <div>
                                 <button
                                         @click="showWelcomeDropdown = !showWelcomeDropdown"
@@ -60,7 +60,6 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                                          class="h-6 w-6">
                                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -137,8 +136,6 @@
         <main class="max-w-7xl mx-auto pt-24 pb-8 sm:px-6 lg:px-8">
             <slot name="content"></slot>
         </main>
-        
-        <portal-target name="modal" multiple></portal-target>
     </div>
 
 </template>
@@ -147,7 +144,6 @@
 import ApplicationLogo from "@/Jetstream/ApplicationLogo";
 import JetApplicationMark from "@/Jetstream/ApplicationMark";
 import JetBanner from "@/Jetstream/Banner";
-import vClickOutside from 'v-click-outside'
 
 export default {
     components: {
@@ -192,9 +188,5 @@ export default {
             this.showWelcomeDropdown = false;
         }
     },
-    
-    directives: {
-        clickOutside: vClickOutside.directive
-    }
 };
 </script>

@@ -12,6 +12,8 @@ class ThirdRegimeType extends BaseModel
 
 //    protected $table = 'third_regime_types';
     protected $primaryKey = 'id_regime_type';
+    // The `third_regime_types` table has no created_at/updated_at columns.
+    public $timestamps = false;
 
     public function thirds()
     {

@@ -1,91 +1,72 @@
 <template>
     <worksheet-layout>
-        <template #toolbarTitle> Worksheet </template>
+        <template #toolbarTitle> Hojas de trabajo </template>
         <template #main>
-<!--            <h1>Hola, {{ username }}</h1>-->
-            <v-item-group>
-                <v-row v-if="!customers">
-                    <v-col v-for="i in 4" :key="i">
-                        <v-skeleton-loader v-bind="attrs" type="card-heading, article, actions"></v-skeleton-loader>
-                    </v-col>
-                </v-row>
-                <v-row>
-                    <v-col v-for="(customer, i) in customers" :key="i" cols="12" md="4">
-                        <v-item>
-                            <v-card>
-                                <v-card-title> <span class="d-inline-block text-truncate"> {{ customer.info.thirdName }} </span> </v-card-title>
-                                <v-card-text>
-                                    <v-simple-table dense>
-                                        <tbody>
-                                        <tr>
-                                            <td>Hojas de trabajo</td>
-                                            <td>{{ customer.worksheets.length }}</td>
-                                        </tr>
-                                        </tbody>
-                                    </v-simple-table>
-                                </v-card-text>
-                                <v-card-actions>
-                                    <v-spacer></v-spacer>
-                                    <v-tooltip v-for="(action, j) in actionsForCustomer" :key="j" bottom>
-                                        <template v-slot:activator="{ on, attrs }">
-                                            <v-btn
-                                                    v-if="action.isVisible(customer.worksheets.length)"
-                                                    v-bind="attrs" v-on="on"
-                                                    @click="action.event(customer)"
-                                                    :color="action.color"
-                                                    icon class="mr-2">
-                                                <v-icon>{{ action.icon }}</v-icon>
-                                            </v-btn>
-                                        </template>
-                                        <span> {{ action.messageTooltip }}</span>
-                                    </v-tooltip>
-                                </v-card-actions>
-                            </v-card>
-                        </v-item>
-                    </v-col>
-                </v-row>
-            </v-item-group>
-            <v-dialog v-model="isNewPeriod" max-width="500">
-                <v-card>
-                    <div class="overline ml-6 pt-4"> Nueva Hoja de trabajo </div>
-                    <v-card-title class="headline mb-2 text-truncate"> {{ customer.name }} </v-card-title>
-                    <v-card-subtitle> Asignación de período</v-card-subtitle>
-                    <v-card-text>
-                        <create-worksheet-form :customer="customer.id"></create-worksheet-form>
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-            <v-dialog v-model="isLookingWorksheets" max-width="700">
-                <v-card>
-                    <div class="overline ml-6 pt-4"> Hojas de trabajo </div>
-                    <v-card-title class="headline mb-2 text-truncate"> {{ customer.name }} </v-card-title>
-                    <!--                    <v-card-subtitle> Asignación de período</v-card-subtitle>-->
-                    <v-card-text>
-                        <v-simple-table dense fixed-header>
-                            <thead>
-                            <tr class="font-weight-bold">
-                                <td>Período</td>
-                                <td>Fecha creación</td>
-                                <td class="text-center">Abierto</td>
-                                <td></td>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="(worksheet, i) in customer.worksheets" :key="i">
-                                <td>{{ worksheet.period }}</td>
-                                <td>{{ completionDateFormatted(worksheet.createdAt) }}</td>
-                                <td class="text-center">{{ worksheet.opened === 'S' ? 'Sí' : 'No' }}</td>
-                                <td class="text-center">
-                                    <v-btn small text plain color="primary" @click="showWorksheet(worksheet.id)">
-                                        Ver
-                                    </v-btn>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </v-simple-table>
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
+            <div v-if="!customers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-for="i in 4" :key="i" class="bg-white rounded-lg shadow p-6 animate-pulse">
+                    <div class="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
+                    <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                </div>
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-for="(customer, i) in customers" :key="i" class="bg-white rounded-lg shadow p-6 flex flex-col">
+                    <h3 class="font-semibold text-gray-800 truncate">{{ customer.info.thirdName }}</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Hojas de trabajo: <span class="font-medium text-gray-700">{{ customer.worksheets.length }}</span>
+                    </p>
+                    <div class="mt-4 flex space-x-2">
+                        <button v-if="customer.worksheets.length > 0" @click="showWorksheets(customer)"
+                                title="Ver hojas de trabajo"
+                                class="p-2 rounded-full text-primary hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                        <button @click="newPeriod(customer)"
+                                title="Crear nuevo período"
+                                class="p-2 rounded-full text-primary hover:bg-gray-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <jet-dialog-modal :show="isNewPeriod" @close="isNewPeriod = false">
+                <template #title> Nueva Hoja de trabajo — {{ customer.name }} </template>
+                <template #content>
+                    <create-worksheet-form :customer="customer.id"></create-worksheet-form>
+                </template>
+            </jet-dialog-modal>
+
+            <jet-dialog-modal :show="isLookingWorksheets" @close="isLookingWorksheets = false" max-width="2xl">
+                <template #title> Hojas de trabajo — {{ customer.name }} </template>
+                <template #content>
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead>
+                        <tr class="text-left font-semibold text-gray-600">
+                            <th class="py-2 pr-4">Período</th>
+                            <th class="py-2 pr-4">Fecha creación</th>
+                            <th class="py-2 pr-4 text-center">Abierto</th>
+                            <th class="py-2"></th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                        <tr v-for="(worksheet, i) in customer.worksheets" :key="i">
+                            <td class="py-2 pr-4">{{ worksheet.period }}</td>
+                            <td class="py-2 pr-4">{{ completionDateFormatted(worksheet.createdAt) }}</td>
+                            <td class="py-2 pr-4 text-center">{{ worksheet.opened === 'S' ? 'Sí' : 'No' }}</td>
+                            <td class="py-2 text-right">
+                                <button class="text-primary hover:underline" @click="showWorksheet(worksheet.id)">Ver</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </template>
+            </jet-dialog-modal>
         </template>
     </worksheet-layout>
 </template>
@@ -93,16 +74,14 @@
 <script>
 import WorksheetLayout from "../../Layouts/WorksheetLayout.vue";
 import CreateWorksheetForm from '../../Components/Forms/Worksheet/CreateWorksheetForm';
+import JetDialogModal from "@/Jetstream/DialogModal";
 import moment from "moment";
 
 export default {
     components: {
         WorksheetLayout,
-        CreateWorksheetForm
-    },
-
-    beforeMount() {
-        // this.getWorksheetWithProcesses()
+        CreateWorksheetForm,
+        JetDialogModal,
     },
 
     props: {
@@ -114,12 +93,6 @@ export default {
 
     data() {
         return {
-            attrs: {
-                class: 'mb-6',
-                boilerplate: false,
-                elevation: 2,
-            },
-            // customers: [],
             customer: {},
             isNewPeriod: false,
             isLookingWorksheets: false,
@@ -127,24 +100,9 @@ export default {
     },
 
     methods: {
-        getWorksheetWithProcesses() {
-            axios
-                .get('/api/customer')
-                .then((response) => {
-                    this.customers = response.data
-                })
-                .catch((error) => {
-                    console.log(error);
-                })
-        },
-
         newPeriod(customer) {
             this.isNewPeriod = true
             this.customer = {id: customer.id, name: customer.info.thirdName, worksheets: customer.worksheets}
-        },
-
-        newProcess(customer) {
-            alert(`Nuevo proceso ${customer}`)
         },
 
         showWorksheets(customer) {
@@ -159,60 +117,6 @@ export default {
         completionDateFormatted(date) {
             return moment(date).format('dddd, D MMMM, YYYY')
         },
-    },
-
-    computed: {
-        username() {
-            let username = this.$page.props.user.name
-            let indexFirstName = username.indexOf(' ')
-
-            if (username.charAt(indexFirstName) !== '') {
-                let indexSecondName = username.indexOf(' ', indexFirstName + 1)
-                let firstName = username.slice(0, indexFirstName).toLowerCase()
-                let secondName = username.slice(indexFirstName + 1, indexSecondName).toLowerCase()
-                return firstName.trim().replace(/^\w/, (c) => c.toUpperCase()) + ' ' + secondName.trim().replace(/^\w/, (c) => c.toUpperCase())
-            } else {
-                return username
-            }
-        },
-
-        actionsForCustomer() {
-            return [
-                {
-                    isVisible: (numberWorksheets) => {
-                        return numberWorksheets > 0
-                    },
-                    event: (idCustomer) => {
-                        this.showWorksheets(idCustomer)
-                    },
-                    color: 'primary',
-                    icon: 'mdi-eye',
-                    messageTooltip: 'Ver hoja de trabajo'
-                },
-                {
-                    isVisible: (numberWorksheets) => {
-                        return numberWorksheets >= 0
-                    },
-                    event: (idCustomer) => {
-                        this.newPeriod(idCustomer)
-                    },
-                    color: 'primary',
-                    icon: 'mdi-timeline-plus',
-                    messageTooltip: 'Crear nuevo período'
-                },
-                // {
-                //     isVisible: (numberWorksheets) => {
-                //         return numberWorksheets > 0
-                //     },
-                //     event: (idCustomer) => {
-                //         this.newProcess(idCustomer)
-                //     },
-                //     color: 'primary',
-                //     icon: 'mdi-layers-plus',
-                //     messageTooltip: 'Añadir proceso'
-                // },
-            ]
-        }
     },
 };
 </script>

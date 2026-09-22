@@ -57,8 +57,6 @@
 </template>
 
 <script>
-import vClickOutside from 'v-click-outside'
-
 export default {
     name: 'Select',
     props: {
@@ -78,7 +76,7 @@ export default {
         isSelected(value) {
             return this.value === value;
         },
-        
+
         closeSelect() {
           this.openSelect = false;
         },
@@ -87,10 +85,6 @@ export default {
             this.closeSelect();
             this.$emit('value', value = {'id': value.id, 'name': value.name});
         }
-    },
-
-    directives: {
-        clickOutside: vClickOutside.directive
     },
 }
 </script>

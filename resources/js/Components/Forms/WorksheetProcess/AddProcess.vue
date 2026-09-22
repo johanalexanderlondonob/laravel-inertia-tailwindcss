@@ -1,87 +1,74 @@
 <template>
-    <v-row justify="space-between">
+    <div class="flex flex-col sm:flex-row sm:items-end gap-4">
         <!-- Component <select> for list of processes availables -->
-        <v-col cols="12" xs="12" sm="4" md="4" lg="5" class="py-0">
-            <v-select
-                    :items="listProcesses"
-                    label="Proceso"
-                    :item-value="listProcesses.idProcess"
-                    v-model="idProcess"
-                    outlined dense
-                    :readonly="verifiedProcess < 2"
-                    prepend-icon="mdi-layers">
-            </v-select>
-        </v-col>
-        <!-- Component <date-picker> for set date end of the process -->
-        <v-col cols="12" xs="12" sm="4" md="4" lg="5" class="py-0">
-            <v-dialog v-model="showDialogCompletionDate" :return-value="completionDate" persisten width="300px">
-                <template v-slot:activator="{on, attrs}">
-                    <v-text-field
-                            :value="completionDateFormatted"
-                            v-bind="attrs"
-                            v-on="on"
-                            label="Fecha tentativa terminación"
-                            prepend-icon="mdi-calendar"
-                            outlined dense></v-text-field>
-                </template>
-                <v-date-picker
-                        v-model="completionDate"
-                        @input="showDialogCompletionDate = false"
-                        :picker-date="completionDate"
-                        :min="minDate"
-                        :max="maxDate"
-                        :disabled="verifiedProcess === 0"
-                        scrollable>
-                </v-date-picker>
-            </v-dialog>
-        </v-col>
+        <div class="flex-1">
+            <jet-label value="Proceso" />
+            <form-select :value="processLabel" :list="listProcesses" :disabled="verifiedProcess < 2"
+                         @value="processSelected"></form-select>
+        </div>
+
+        <!-- Native <input type="date"> for date end of the process -->
+        <div class="flex-1">
+            <jet-label for="completionDate" value="Fecha tentativa terminación" />
+            <jet-input id="completionDate" type="date" class="mt-1 block w-full" v-model="completionDate"
+                       :min="minDate" :max="maxDate" :disabled="verifiedProcess === 0" />
+        </div>
+
         <!-- Buttons for manage (as add or reset fields) of the current process -->
-        <v-col lg="2" class="d-flex inline-flex justify-space-around py-0">
-            <v-tooltip v-for="(action, i) in actions" :key="i" bottom>
-                <template v-slot:activator="{ on, attrs}">
-                    <v-btn
-                            v-bind="attrs" v-on="on"
-                            :disabled="action.disabled" @click="action.eventName"
-                            elevation="2"
-                            :color="action.color"
-                            small fab class="mr-2">
-                        <v-icon>{{ action.icon }}</v-icon>
-                    </v-btn>
-                </template>
-                <span> {{ action.messageTooltip }}</span>
-            </v-tooltip>
-        </v-col>
+        <div class="flex gap-2">
+            <button v-for="(action, i) in actions" :key="i" type="button"
+                    :title="action.messageTooltip" :disabled="action.disabled"
+                    @click="action.eventName"
+                    class="p-2 rounded-full text-white bg-primary hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed">
+                <svg v-if="action.icon === 'add'" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        </div>
+
         <!-- Message of alert in case present any problem -->
-        <v-dialog v-model="dialogProcess" persistent max-width="450">
-            <v-card>
-                <v-card-title class="headline"> ¡Oops! </v-card-title>
-                <v-card-text> Se ha perdido la continuidad para configurar las fechas tentativas de los procesos. Deberá empezar de nuevo.</v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary darken-1" text @click="resetAll"> Lo arreglaré </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-    </v-row>
+        <jet-dialog-modal :show="dialogProcess" @close="resetAll">
+            <template #title> ¡Oops! </template>
+            <template #content> Se ha perdido la continuidad para configurar las fechas tentativas de los procesos. Deberá empezar de nuevo. </template>
+            <template #footer>
+                <jet-button @click="resetAll"> Lo arreglaré </jet-button>
+            </template>
+        </jet-dialog-modal>
+    </div>
 </template>
 
 <script>
-import moment from 'moment';
+import FormSelect from "@/Components/Forms/Select";
+import JetLabel from "@/Jetstream/Label";
+import JetInput from "@/Jetstream/Input";
+import JetButton from "@/Jetstream/Button";
+import JetDialogModal from "@/Jetstream/DialogModal";
 
 export default {
     name: "AddProcess",
 
+    components: {
+        FormSelect,
+        JetLabel,
+        JetInput,
+        JetButton,
+        JetDialogModal,
+    },
+
     props: {
         listProcesses: {
             type: Array,
-            default: []
+            default: () => []
         },
     },
 
     created() {
-        // Sets the variables that the <date-picker> component use for show days availables
-        this.minDate = new Date().toISOString()
-        this.maxDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+        // Sets the variables that the date input use for show days availables
+        this.minDate = new Date().toISOString().substring(0, 10)
+        this.maxDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().substring(0, 10)
         // Sets the auxiliar variable that will use a question before add a process
         this.beforeSequenceProcess = 0
     },
@@ -89,8 +76,8 @@ export default {
     data() {
         return {
             idProcess: '',
+            processLabel: 'Elige un proceso',
             completionDate: '',
-            showDialogCompletionDate: false,
             dialogProcess: false,
             // This variable will store the number of remaining fields required to add a process. If your value is reduce to zero, then the process will save
             verifiedProcess: 2,
@@ -116,6 +103,11 @@ export default {
     },
 
     methods: {
+        processSelected(value) {
+            this.idProcess = value.id
+            this.processLabel = value.name
+        },
+
         // This function will says to your container element that this info of the process with idProcess and the completionDate are been setted
         addProcess() {
             // All process have a order of urgency for execute. Here we get the secuence of the process
@@ -143,13 +135,14 @@ export default {
 
         resetProcess() {
             this.idProcess = ''
+            this.processLabel = 'Elige un proceso'
             this.completionDate = ''
             this.verifiedProcess = 2
         },
 
         resetAll() {
-            this.minDate = new Date().toISOString()
-            this.maxDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+            this.minDate = new Date().toISOString().substring(0, 10)
+            this.maxDate = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().substring(0, 10)
             this.beforeSequenceProcess = 0
             this.beforeCompletionDate = ''
             this.resetProcess()
@@ -160,32 +153,26 @@ export default {
         // Function that return a object with the info of the current process as your description and the sequence
         process(idProcess) {
             for (const listProcess of this.listProcesses) {
-                if (listProcess.value === idProcess) {
-                    return {name: listProcess.text, sequence: listProcess.sequence}
+                if (listProcess.id === idProcess) {
+                    return {name: listProcess.name, sequence: listProcess.sequence}
                 }
             }
         }
     },
 
     computed: {
-        completionDateFormatted() {
-            return this.completionDate ? moment(this.completionDate).format('dddd, D MMMM, YYYY') : '';
-        },
-
         actions() {
             return [
                 {
                     eventName: this.addProcess,
-                    disabled: !this.verifiedProcess <= 0,
-                    color: 'primary',
-                    icon: 'mdi-plus',
+                    disabled: !(this.verifiedProcess <= 0),
+                    icon: 'add',
                     messageTooltip: 'Añadir a procesos'
                 },
                 {
                     eventName: this.resetProcess,
                     disabled: this.verifiedProcess >= 2,
-                    color: 'primary',
-                    icon: 'mdi-eraser-variant',
+                    icon: 'reset',
                     messageTooltip: 'Limpiar campos'
                 },
             ]

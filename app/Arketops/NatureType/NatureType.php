@@ -11,6 +11,8 @@ class NatureType extends BaseModel
     use HasFactory;
 
     protected $primaryKey = 'id_nature_type';
+    // The `nature_types` table has no created_at/updated_at columns.
+    public $timestamps = false;
 
     public function thirds()
     {

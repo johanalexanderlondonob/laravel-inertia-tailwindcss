@@ -14,6 +14,9 @@ class Customer extends BaseModel
     use HasFactory;
 
     protected $primaryKey = 'id_third';
+    protected $fillable = ['id_third', 'active'];
+    // id_third is a foreign key to thirds, not an auto-increment column.
+    public $incrementing = false;
 
     protected $with = ['third'];
 

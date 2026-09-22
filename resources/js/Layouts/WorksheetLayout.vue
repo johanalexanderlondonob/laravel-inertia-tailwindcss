@@ -1,140 +1,88 @@
 <template>
-    <v-app>
-        <v-app-bar app clipped-left fixed elevate-on-scroll dense :dark="dark">
-            <!-- Actioner for visible/invisible bar side -->
-            <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+    <div class="min-h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <aside
+            class="fixed inset-y-0 left-0 z-30 w-64 bg-secondary text-white transform transition-transform duration-200 lg:translate-x-0"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+        >
+            <div class="h-16 flex items-center px-6 border-b border-gray-700">
+                <Link :href="route('welcome')" class="font-semibold text-lg truncate">Arketops</Link>
+            </div>
 
-            <v-toolbar-title>
-                <slot name="toolbarTitle"></slot>
-            </v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn icon>
-                <v-icon>mdi-magnify</v-icon>
-            </v-btn>
+            <div class="px-6 py-4 border-b border-gray-700" v-if="$page.props.user">
+                <img
+                    class="h-10 w-10 rounded-full mb-2"
+                    :src="$page.props.user.profile_photo_url"
+                    :alt="$page.props.user.name"
+                />
+                <p class="text-sm font-medium truncate">{{ $page.props.user.name }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ $page.props.user.email }}</p>
+            </div>
 
-            <v-btn icon>
-                <v-icon @click="changeTheme">mdi-theme-light-dark</v-icon>
-            </v-btn>
-
-            <!-- Vertical menu. Open options in the top appbar -->
-            <v-menu bottom left>
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon v-bind="attrs" v-on="on">
-                        <v-icon>mdi-dots-vertical</v-icon>
-                    </v-btn>
-                </template>
-
-                <v-list>
-                    <v-list-item v-for="n in 5" :key="n" @click="() => {}">
-                        <v-list-item-title>Option {{ n }}</v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-menu>
-        </v-app-bar>
-
-        <!-- Bar side -->
-        <!-- Profile information -->
-        <v-navigation-drawer app v-model="drawer" clipped :dark="dark">
-            <template #prepend>
-                <v-list-item two-line>
-                    <v-list-item-avatar>
-                        <img :src="$page.props.user.profile_photo_url" :alt="$page.props.user.name" />
-                    </v-list-item-avatar>
-                    <v-list-item-content>
-                        <v-list-item-title>
-                            {{ $page.props.user.name }}
-                        </v-list-item-title>
-                        <v-list-item-subtitle>
-                            {{ $page.props.user.email }}
-                        </v-list-item-subtitle>
-                    </v-list-item-content>
-                </v-list-item>
-            </template>
-
-            <!-- Link items of Worksheet -->
-            <v-list nav dense flat :dark="dark">
-                <v-list-item-group v-model="group" mandatory color="primary" :dark="dark">
-                    <v-list-item
-                            v-for="(item, i) in items"
-                            :key="i"
-                            :href="route(item.to)"
-                            input-value="'ok'"
-                    >
-                        <v-list-item-icon>
-                            <v-icon>{{ item.icon }}</v-icon>
-                        </v-list-item-icon>
-                        <v-list-item-title>{{ item.title }}</v-list-item-title>
-                    </v-list-item>
-                </v-list-item-group>
-            </v-list>
-            <v-spacer></v-spacer>
-
-            <!-- End of the drawer -->
-            <template #append>
-                <!-- Button to exit from Worksheet -->
-                <v-btn
-                        plain
-                        block
-                        @click="logout"
-                        color="red"
-                        class="d-flex justify-space-center"
+            <nav class="px-2 py-4 space-y-1">
+                <Link
+                    v-for="(item, i) in items"
+                    :key="i"
+                    :href="route(item.to)"
+                    class="flex items-center px-4 py-2 rounded-md text-sm text-gray-200 hover:bg-gray-700"
                 >
-                    Logout
-                    <v-icon right>mdi-exit-to-app</v-icon>
-                </v-btn>
-            </template>
-        </v-navigation-drawer>
+                    {{ item.title }}
+                </Link>
+            </nav>
 
-        <v-main>
-            <v-container>
+            <div class="absolute bottom-0 left-0 right-0 p-4">
+                <button
+                    @click="logout"
+                    class="w-full flex items-center justify-center px-4 py-2 rounded-md text-sm text-red-300 hover:bg-red-900 hover:text-red-200"
+                >
+                    Cerrar sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Mobile overlay -->
+        <div v-if="sidebarOpen" class="fixed inset-0 z-20 bg-black opacity-50 lg:hidden" @click="sidebarOpen = false"></div>
+
+        <div class="lg:pl-64 flex flex-col min-h-screen">
+            <!-- Topbar -->
+            <header class="h-16 bg-white shadow flex items-center px-4 sm:px-6">
+                <button class="lg:hidden mr-4 text-gray-500" @click="sidebarOpen = !sidebarOpen">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1 class="text-lg font-semibold text-gray-800">
+                    <slot name="toolbarTitle"></slot>
+                </h1>
+            </header>
+
+            <main class="flex-1 p-4 sm:p-6">
                 <slot name="main"></slot>
-            </v-container>
-        </v-main>
+            </main>
 
-        <v-footer app fixed>
-            <p class="mb-0"> <small> Copyright (c) 2021. Lorem ipsum dolor sit amet, consectetur adipiscing elit. </small> </p>
-        </v-footer>
-    </v-app>
+            <footer class="text-center text-xs text-gray-400 py-4">
+                Copyright (c) {{ new Date().getFullYear() }}.
+            </footer>
+        </div>
+    </div>
 </template>
 
 <script>
-
 export default {
-    components: {},
-
     data() {
         return {
-            group: 0,
-            drawer: false,
-            dark: false,
+            sidebarOpen: false,
             items: [
-                {
-                    title: 'Index',
-                    to: 'worksheet.index',
-                    icon: 'mdi-home'
-                },
-                {
-                    title: 'New worksheet',
-                    to: 'worksheet.new',
-                    icon: 'mdi-newspaper'
-                },
+                { title: 'Hojas de trabajo', to: 'worksheet.index' },
+                { title: 'Nueva hoja de trabajo', to: 'worksheet.new' },
             ],
         };
     },
 
     methods: {
         logout() {
-            this.$inertia.post(route("logout"));
+            this.$inertia.post(route('logout'));
         },
-
-        changeTheme() {
-            this.dark = !this.dark
-            this.$vuetify.theme.dark = this.dark
-        }
     },
-
-    mounted() {
-        // console.log(this.$page.props.user);
-    }
 };
 </script>

@@ -1,45 +1,66 @@
 <template>
-    <v-form ref="formNewWorksheet">
-        <!-- Select customer and set period-->
-        <v-row>
-            <v-col v-if="customers" cols="12">
-                <v-select label="Cliente" outlined dense v-model="form.id_customer" autofocus
-                          :rules="rulesCustomer"
-                          :items="listCustomers"
-                          :error-messages="form.errors.id_customer"></v-select>
-            </v-col>
-            <v-col cols="12">
-                <v-text-field label="Período" outlined dense v-model="form.period" placeholder="2101" counter="4" autofocus
-                              hint="Dos últimos dígitos del año, y el mes"
-                              :rules="rulesPeriod"
-                              :disabled="!form.id_customer"
-                              :error-messages="form.errors.period"></v-text-field>
-            </v-col>
-        </v-row>
-        <v-spacer></v-spacer>
-        <v-row>
-            <v-col>
-                <v-btn outlined color="primary" @click="createWorskheet"> Crear Hoja de trabajo</v-btn>
-            </v-col>
-        </v-row>
-        <v-dialog v-model="dialogPeriod" persistent max-width="450">
-            <v-card>
-                <v-card-title class="headline"> Se encontró un período </v-card-title>
-                <v-card-text> Ya existe un período para el cliente seleccionado. Verifica los datos provistos.</v-card-text>
-                <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary darken-1" text @click="dialogPeriod = false"> ¡Entendido! </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-        <v-snackbar top v-model="showSnackbarWorksheetCreated"
-                    timeout="1500"> Hoja de trabajo creado satisfactoriamente </v-snackbar>
-    </v-form>
+    <form @submit.prevent="createWorksheet">
+        <div class="space-y-4">
+            <div v-if="customers">
+                <jet-label for="id_customer" value="Cliente" />
+                <select id="id_customer" v-model="form.id_customer"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-25">
+                    <option value="" disabled>Elige un cliente</option>
+                    <option v-for="customer in listCustomers" :key="customer.value" :value="customer.value">
+                        {{ customer.text }}
+                    </option>
+                </select>
+                <jet-input-error :message="form.errors.id_customer" class="mt-2" />
+            </div>
+
+            <div>
+                <jet-label for="period" value="Período" />
+                <jet-input id="period" type="text" class="mt-1 block w-full" v-model="form.period"
+                           placeholder="2101" maxlength="4" :disabled="!form.id_customer" autofocus />
+                <p class="mt-1 text-xs text-gray-400">Dos últimos dígitos del año, y el mes</p>
+                <jet-input-error :message="form.errors.period" class="mt-2" />
+            </div>
+
+            <jet-button type="submit" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                Crear Hoja de trabajo
+            </jet-button>
+        </div>
+
+        <jet-dialog-modal :show="dialogPeriod" @close="dialogPeriod = false">
+            <template #title> Se encontró un período </template>
+            <template #content> Ya existe un período para el cliente seleccionado. Verifica los datos provistos. </template>
+            <template #footer>
+                <jet-secondary-button @click="dialogPeriod = false"> ¡Entendido! </jet-secondary-button>
+            </template>
+        </jet-dialog-modal>
+
+        <jet-action-message :on="showSnackbarWorksheetCreated" class="mt-2 block">
+            Hoja de trabajo creada satisfactoriamente
+        </jet-action-message>
+    </form>
 </template>
 
 <script>
+import JetLabel from "@/Jetstream/Label";
+import JetInput from "@/Jetstream/Input";
+import JetInputError from "@/Jetstream/InputError";
+import JetButton from "@/Jetstream/Button";
+import JetSecondaryButton from "@/Jetstream/SecondaryButton";
+import JetDialogModal from "@/Jetstream/DialogModal";
+import JetActionMessage from "@/Jetstream/ActionMessage";
+
 export default {
     name: "CreateWorksheetForm",
+
+    components: {
+        JetLabel,
+        JetInput,
+        JetInputError,
+        JetButton,
+        JetSecondaryButton,
+        JetDialogModal,
+        JetActionMessage,
+    },
 
     props: {
         customer: {
@@ -70,13 +91,6 @@ export default {
                 id_customer: '',
                 period: '',
             }),
-            rulesPeriod: [
-                value => value.length <= 4 || 'Only 4 characters',
-                value => !!value || 'This field is required'
-            ],
-            rulesCustomer: [
-                value => !!value || 'This field is required'
-            ],
             dialogPeriod: false,
             showSnackbarWorksheetCreated: false,
         }
@@ -89,16 +103,11 @@ export default {
                 axios
                     .get('/api/worksheet/' + this.form.id_customer + '/' + this.form.period)
                     .then((response) => {
-                        console.log(response)
                         if (response.data) {
                             // Show the dialog that notice customer already have a period asignated
                             this.dialogPeriod = true
                             this.form.period = ''
                         }
-                        // else {
-                        //     // Sets the field period of the form that will be sent to the server
-                        //     this.form.period = this.period
-                        // }
                     })
                     .catch((error) => {
                         alert(error)
@@ -106,21 +115,16 @@ export default {
             }
         },
 
-        validate() {
-            return this.$refs.formNewWorksheet.validate()
-        },
-
-        createWorskheet() {
-            if (this.validate()) {
-                this.form.post(route('worksheet.new'), {
-                    errorBag: 'createWorksheet',
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        this.form.reset();
-                        this.showSnackbarWorksheetCreated = true
-                    }
-                })
-            }
+        createWorksheet() {
+            this.form.post(route('worksheet.new'), {
+                errorBag: 'createWorksheet',
+                preserveScroll: true,
+                onSuccess: () => {
+                    this.form.reset();
+                    this.showSnackbarWorksheetCreated = true
+                    setTimeout(() => this.showSnackbarWorksheetCreated = false, 2000)
+                }
+            })
         },
 
         resetForm() {
@@ -140,24 +144,11 @@ export default {
             }
             return listCustomers;
         },
-        // Function that return true or false if the period given is valid. The format valid must be contains 4 digits:
-        //      - the first two digits are the two last digits of the year;
-        //      - the second two digits are the month
-        isValidPeriod() {
-            let year = this.form.period.substring(0, 1);
-            let month = this.form.period.substring(2, 4);
-            let currentYear = new Date().getFullYear().toString()
-
-            return year > '19' && year <= currentYear.substring(2, 4) && month.startsWith('0', 0) || month.startsWith('1', 0) && month <= '12'
-        }
     },
 
     watch: {
         'form.period'(newValue, oldValue) {
-            // if (this.form.period.length === 4 && newValue !== oldValue && this.isValidPeriod) {
-                // this.form.reset('period', 'processes')
-                this.debounceExistsPeriod();
-            // }
+            this.debounceExistsPeriod();
         },
         customer(newValue) {
             this.form.period = ''
@@ -166,7 +157,3 @@ export default {
     },
 }
 </script>
-
-<style scoped>
-
-</style>
